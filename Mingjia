@@ -22,7 +22,7 @@ for main_bottom_right in main_bottom_right_lis:
             for Raw_second_web in  list_stock_allMing_web:
                 pro_second_web = r'http://mingjia.eastmoney.com'+str(Raw_second_web)
                 list_stock_allMingjia_web.append(pro_second_web)
-print(list_stock_allMingjia_web)
+#print(list_stock_allMingjia_web)
 ##########所有名家###############
 list_stock_allMingjias_web=[]
 for Mingjia_web in list_stock_allMingjia_web:
@@ -39,7 +39,7 @@ for Mingjia_web in list_stock_allMingjia_web:
             for list_Minjia_web in list_Minjia_webs:
                 pro_second_web = r'http://mingjia.eastmoney.com'+str(list_Minjia_web)
                 list_stock_allMingjias_web.append(pro_second_web)
-print(list_stock_allMingjias_web)
+#print(list_stock_allMingjias_web)
 #############写入csv模块################
 import csv
 import os
