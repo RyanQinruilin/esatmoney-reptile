@@ -1,0 +1,64 @@
+"""机构&名家"""
+from lxml import html
+import xml
+import requests
+from bs4 import BeautifulSoup
+import numpy as np
+import re
+import urllib.request
+#############写入csv模块################
+import csv
+import os
+import codecs
+file_obj = codecs.open('jiogu.csv','a+', 'utf-8') # 防止乱码
+writer = csv.writer(file_obj)
+writer.writerow(["标题","网址","内容","来源"])
+#############名家p############
+fir_ji = []
+stock_sec_web= requests.get('http://jigou.eastmoney.com/stock.html')
+stock_sec_soup = BeautifulSoup(stock_sec_web.content, "lxml")  #用lxml解析器解析该网页的内容, 好像f.text也是返回的html
+for k in stock_sec_soup.find_all('ul',class_='main_bottom_right'):#,找到div并且class为title的标签
+    webs = re.findall('href="(.*)" ',str(k))
+    fir = k.text
+    for i in range(0,len(webs)):
+        web = r'http://jigou.eastmoney.com'+str(webs[i])
+        print(web)
+        fir_ji.append(web)
+print(fir_ji)
+
+proweb_lis = []
+for sec_web in fir_ji:
+    handle = requests.get(sec_web)
+    soup = BeautifulSoup(handle.content,'lxml')
+    for target in soup.find_all('div',class_ = 'cmleft_bottom'):
+        webs = target.find_all('a')
+        for web in webs:
+            raweb = re.findall(' href="(.*)" ',str(web))
+            proweb = 'http://jigou.eastmoney.com'+str(raweb[0])
+            proweb_lis.append(proweb)
+            print(proweb)
+print(proweb_lis)
+#####名家的网址&页名###########
+title_lis = []
+title_web = []
+headers = { "User-Agent":"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)"}
+for jigouweb in proweb_lis:
+    for i in range(1,25):
+            url = str(jigouweb)+r'/'+str(i)
+        #try:
+            print(url)
+            handle = requests.get(url,headers =headers)
+            soup = BeautifulSoup(handle.content,'lxml')
+            for title in soup.find_all('a',class_="acontent"):
+                title_lis.append(title.text)
+                web = re.findall('href="(.*)"',str(title))
+                con_handle = requests.get(web[0])
+                a = ''
+                con_soup = BeautifulSoup(con_handle.content,'lxml')
+                for k in con_soup.find_all('div',class_ = 'Body'):
+                    cons = k.find_all('p')
+                    for con in cons:
+                        a = a+con.text
+                    sourse = re.findall('（文章来源：（.*）',a)
+                    print(web[0],title.text,a)
+                    writer.writerow([web[0],title.text,a])
