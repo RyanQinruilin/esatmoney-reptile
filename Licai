@@ -1,0 +1,161 @@
+import urllib
+from bs4 import BeautifulSoup
+import re
+import requests
+from lxml import html
+import xlwt
+import time
+import random
+######翻页函数########
+def turnpage(Raw_url,pages):
+    pro_lis = []
+    for i in range(1,pages):
+        fir_url = Raw_url.split('.')#http://finance.eastmoney.com/a/ccjdd.html
+        pro_url = fir_url[0]+r'.'+fir_url[1]+r'.'+fir_url[2]+r'_'+str(i)+r'.'+fir_url[3]
+        pro_lis.append(pro_url)
+    return pro_lis
+lc_webs = ['http://money.eastmoney.com/a/clcdd.html','http://money.eastmoney.com/a/clczx.html','http://money.eastmoney.com/a/clczx.html','http://money.eastmoney.com/news/clcal.html','http://money.eastmoney.com/news/cfczy.html','http://money.eastmoney.com/news/cjuzx.html','http://money.eastmoney.com/news/cyhlc.html','http://money.eastmoney.com/news/cbxlc.html','http://money.eastmoney.com/news/csczx.html','http://trust.eastmoney.com/news/ccpzx.html','http://trust.eastmoney.com/news/cxtgs.html','http://trust.eastmoney.com/news/cdh.html','http://trust.eastmoney.com/news/cjggd.html','http://trust.eastmoney.com/news/czjzl.html','http://trust.eastmoney.com/news/cxtxy.html','http://trust.eastmoney.com/news/cxtcd.html']
+def lc_content():
+    #############财经网页###########
+    lc_lis = []             #创建整理后的网页列表
+    title_lis = []          #创建标题列表
+    web_lis = []            #创建网址列表  
+    pro_content=[]          #创建内容列表
+    zb_lis = []             #来源列表
+    #lc_webs = ['http://money.eastmoney.com/a/clcdd.html']  #网页起始列表
+    time_ = random.uniform(1.0,3.0)
+    ##################创建excel表格###########
+    i = 1
+    j = 0
+    workbook = xlwt.Workbook(encoding = 'utf-8')
+    worksheet = workbook.add_sheet('理财',cell_overwrite_ok=True)
+    #for webs in all_web:
+    worksheet.write(0, 1, label = '标题')
+    worksheet.write(0, 2, label = '网址')
+    worksheet.write(0, 3, label = '内容')
+    worksheet.write(0, 4, label = '来源')
+    ############网页加工，形成不同的页码##########
+    for web in lc_webs:
+        pro_lis = turnpage(web,4)
+        for pro_web in pro_lis:
+            lc_lis.append(pro_web)
+    #############获取网页的列表的内容##################
+    try:
+        for lc_web in lc_lis:
+            handle_web = requests.get(lc_web)
+            web_soup = BeautifulSoup(handle_web.content,'lxml')
+            for titles in web_soup.find_all('div',class_='repeatList'):
+                k = titles.find_all('a')
+                for title in k:
+                    pro_title = title.text 
+                    if len(pro_title)<4:continue
+                    title_lis.append(pro_title)
+                    #worksheet.write(i, 1, label = pro_title)
+                    ##获得网页##########
+                    pro_webs = re.findall('<a href="(.*)" target="_blank">',str(title))
+                    for pro_web in pro_webs:
+                        if pro_web not in web_lis:                                     ###防止重复筛选网页
+                            web_lis.append(pro_web)
+        for i in range(1,len(title_lis)+1):
+            try:
+                print(web_lis[i-1],title_lis[i-1])
+                worksheet.write(i, 1, label = title_lis[i-1])
+                worksheet.write(i, 2, label = web_lis[i-1])
+                conhan_web = requests.get(web_lis[i-1])
+                conweb_soup = BeautifulSoup(conhan_web.content,'lxml')
+                raw_con = conweb_soup.find_all("div",class_='Body')
+                for num in raw_con:
+                    pro_con = num.find_all('p')
+                    a=''
+                    for content in pro_con:
+                        a =a+ content.text
+                        a.rstrip
+                    #######获取来源######
+                    zb = re.findall("（文章来源：(.*)）",a)
+                    for resou in zb:
+                        zb_lis.append(resou)
+                        #worksheet.write(i, 4, label = resou)
+                    #pro_content.append(a)
+                    worksheet.write(i, 3, label = a)
+                    worksheet.write(i, 4, label = resou)
+                    workbook.save('Excel_dfcflc.xls')
+                    print(a,resou) 
+            except:
+                print('ops')
+                ######获得标题########
+            i = i+1
+            if i%11 == 0: time.sleep(time_)        
+    finally:workbook.save('Excel_dfcflc.xls')
+  
+ def lc_content():
+    #############财经网页###########
+    lc_lis = []             #创建整理后的网页列表
+    title_lis = []          #创建标题列表
+    web_lis = []            #创建网址列表  
+    pro_content=[]          #创建内容列表
+    zb_lis = []             #来源列表
+    #lc_webs = ['http://money.eastmoney.com/a/clcdd.html']  #网页起始列表
+    time_ = random.uniform(1.0,3.0)
+    ##################创建excel表格###########
+    i = 1
+    j = 0
+    workbook = xlwt.Workbook(encoding = 'utf-8')
+    worksheet = workbook.add_sheet('理财',cell_overwrite_ok=True)
+    #for webs in all_web:
+    worksheet.write(0, 1, label = '标题')
+    worksheet.write(0, 2, label = '网址')
+    worksheet.write(0, 3, label = '内容')
+    worksheet.write(0, 4, label = '来源')
+    ############网页加工，形成不同的页码##########
+    for web in lc_webs:
+        pro_lis = turnpage(web,4)
+        for pro_web in pro_lis:
+            lc_lis.append(pro_web)
+    #############获取网页的列表的内容##################
+    try:
+        for lc_web in lc_lis:
+            handle_web = requests.get(lc_web)
+            web_soup = BeautifulSoup(handle_web.content,'lxml')
+            for titles in web_soup.find_all('div',class_='repeatList'):
+                k = titles.find_all('a')
+                for title in k:
+                    pro_title = title.text 
+                    if len(pro_title)<4:continue
+                    title_lis.append(pro_title)
+                    #worksheet.write(i, 1, label = pro_title)
+                    ##获得网页##########
+                    pro_webs = re.findall('<a href="(.*)" target="_blank">',str(title))
+                    for pro_web in pro_webs:
+                        if pro_web not in web_lis:                                     ###防止重复筛选网页
+                            web_lis.append(pro_web)
+        for i in range(1,len(title_lis)+1):
+            try:
+                print(web_lis[i-1],title_lis[i-1])
+                worksheet.write(i, 1, label = title_lis[i-1])
+                worksheet.write(i, 2, label = web_lis[i-1])
+                conhan_web = requests.get(web_lis[i-1])
+                conweb_soup = BeautifulSoup(conhan_web.content,'lxml')
+                raw_con = conweb_soup.find_all("div",class_='Body')
+                for num in raw_con:
+                    pro_con = num.find_all('p')
+                    a=''
+                    for content in pro_con:
+                        a =a+ content.text
+                        a.rstrip
+                    #######获取来源######
+                    zb = re.findall("（文章来源：(.*)）",a)
+                    for resou in zb:
+                        zb_lis.append(resou)
+                        #worksheet.write(i, 4, label = resou)
+                    #pro_content.append(a)
+                    worksheet.write(i, 3, label = a)
+                    worksheet.write(i, 4, label = resou)
+                    workbook.save('Excel_dfcflc.xls')
+                    print(a,resou) 
+            except:
+                print('ops')
+                ######获得标题########
+            i = i+1
+            if i%11 == 0: time.sleep(time_) 
+            
+  finally:workbook.save('Excel_dfcflc.xls')
