@@ -1,0 +1,80 @@
+import urllib
+from bs4 import BeautifulSoup
+import re
+import requests
+from lxml import html
+import xlwt
+######翻页函数########
+def turnpage(Raw_url,pages):
+    pro_lis = []
+    for i in range(1,pages):
+        fir_url = Raw_url.split('.')#http://finance.eastmoney.com/a/ccjdd.html
+        pro_url = fir_url[0]+r'.'+fir_url[1]+r'.'+fir_url[2]+r'_'+str(i)+r'.'+fir_url[3]
+        pro_lis.append(pro_url)
+    return pro_lis
+def qq_content():
+#############财经网页###########
+    qq_lis = []
+    title_lis = []
+    web_lis = []
+    content_lis = []
+    pro_content=[]
+    zb_lis = []
+    qq_webs = ['http://option.eastmoney.com/news/cqqxx.html','http://stock.eastmoney.com/news/cmgdd.html','http://stock.eastmoney.com/news/cmgyw.html','http://stock.eastmoney.com/news/cmgpl.html','http://stock.eastmoney.com/news/czggng.html','http://stock.eastmoney.com/news/cmggs.html','http://stock.eastmoney.com/news/cmgxt.html','http://hk.eastmoney.com/news/cggdd.html','http://hk.eastmoney.com/news/cggdd.html','http://hk.eastmoney.com/news/csckx.html','http://hk.eastmoney.com/news/cahgdt.html','http://hk.eastmoney.com/news/cgsbd.html','http://stock.eastmoney.com/news/cgsyj.html','http://hk.eastmoney.com/news/cggyj.html','http://hk.eastmoney.com/news/cwozx.html','http://forex.eastmoney.com/a/cwhdd.html','http://forex.eastmoney.com/a/cwhxw.html','http://forex.eastmoney.com/a/cwhpl.html','http://forex.eastmoney.com/a/cdhgd.html','http://forex.eastmoney.com/news/cyhdt.html','http://forex.eastmoney.com/news/cwhtzkt.html','http://forex.eastmoney.com/news/cwhlczx.html','http://futures.eastmoney.com/news/cqhdd.html','http://futures.eastmoney.com/news/cqsyw.html','http://futures.eastmoney.com/news/cjdgc.html','http://futures.eastmoney.com/news/cqspl.html','http://futures.eastmoney.com/news/cwpsd.html','http://futures.eastmoney.com/news/czhzx.html','http://futures.eastmoney.com/news/cnpbb.html','http://gold.eastmoney.com/news/chjdd.html','http://gold.eastmoney.com/news/chjyw.html','http://gold.eastmoney.com/news/cjspl.html','http://gold.eastmoney.com/news/czbss.html','http://gold.eastmoney.com/news/chjxh.html','http://gold.eastmoney.com/news/chjtd.html','http://gold.eastmoney.com/news/czhj.html']
+    for web in qq_webs:
+        pro_lis = turnpage(web,2)
+        for pro_web in pro_lis:
+            qq_lis.append(pro_web)
+#############获取网页的列表的内容##################
+    for qq_web in qq_lis:
+        handle_web = requests.get(qq_web)
+        web_soup = BeautifulSoup(handle_web.content,'lxml')
+        for titles in web_soup.find_all('div',class_='repeatList'):
+            k = titles.find_all('a')
+            for title in k:
+                pro_webs = re.findall('<a href="(.*)" target="_blank">',str(title))
+                for pro_web in pro_webs:
+                    if pro_web not in web_lis:
+                        web_lis.append(pro_web)
+                pro_title = title.text
+                if len(pro_title)<4:continue
+                title_lis.append(pro_title)
+                #######获取网页内容#####
+                conhan_web = requests.get(pro_web)
+                conweb_soup = BeautifulSoup(conhan_web.content,'lxml')
+                raw_con = conweb_soup.find_all("div",class_='Body')
+                for i in raw_con:
+                    pro_con = i.find_all('p')
+                    a=''
+                    for content in pro_con:
+                        a =a+ content.text
+                        a.rstrip
+                #######获取来源######
+                    zb = re.findall("（文章来源：(.*)）",a)
+                    for resou in zb:
+                        zb_lis.append(resou)
+                    print(pro_web,pro_title,a,resou) 
+                pro_content.append(a)
+    ####################写入excel表格############
+    i = 1
+    j = 0
+    workbook = xlwt.Workbook(encoding = 'utf-8')
+    worksheet = workbook.add_sheet('全球',cell_overwrite_ok=True)
+    #for webs in all_web:
+    worksheet.write(0, 1, label = '标题')
+    worksheet.write(0, 2, label = '网址')
+    worksheet.write(0, 3, label = '内容')
+    worksheet.write(0, 4, label = '来源')
+    for i in range(1,len(web_lis)+1):
+        worksheet.write(i, 1, label = title_lis[i-1])
+        worksheet.write(i, 2, label = web_lis[i-1])
+        worksheet.write(i, 3, label = pro_content[i-1])
+        worksheet.write(i, 4, label = zb_lis[i-1])
+        #worksheet.write(i,j,label = str(webs))
+        i = i+1
+    #wb = xl_copy(workbook)
+    # add sheet to workbook with existing sheets
+    #Sheet1 = wb.add_sheet('财经')
+    workbook.save('Excel_dfcfqq.xls')
+    
+qq_content()
